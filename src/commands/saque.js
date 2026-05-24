@@ -6,6 +6,12 @@ const {
   sendWithdrawLog
 } = require("../utils/log");
 
+const {
+  successEmbed,
+  errorEmbed,
+  withdrawalEmbed
+} = require("../utils/embeds");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("saque")
@@ -29,7 +35,12 @@ module.exports = {
 
     if (amount < 10) {
       return interaction.reply({
-        content: "O valor mínimo para saque é R$10.",
+        embeds: [
+          errorEmbed(
+            "Valor mínimo não atingido",
+            "O valor mínimo para saque é **R$10,00**."
+          )
+        ],
         ephemeral: true
       });
     }
@@ -42,14 +53,24 @@ module.exports = {
 
     if (!user) {
       return interaction.reply({
-        content: "Você ainda não possui conta de referência. Use /ref primeiro.",
+        embeds: [
+          errorEmbed(
+            "Conta não encontrada",
+            "Use `/ref` primeiro para participar do sistema de afiliados."
+          )
+        ],
         ephemeral: true
       });
     }
 
     if (user.balance < amount) {
       return interaction.reply({
-        content: `Saldo insuficiente. Seu saldo atual é R$${user.balance.toFixed(2)}.`,
+        embeds: [
+          errorEmbed(
+            "Saldo insuficiente",
+            `Seu saldo atual é **R$${user.balance.toFixed(2)}**.`
+          )
+        ],
         ephemeral: true
       });
     }
@@ -74,8 +95,8 @@ module.exports = {
       }
     });
 
-    await sendAdminLog(
-      interaction.client,
+    await sendAdminLog(interaction.client, {
+      content:
 `💸 Novo saque solicitado
 
 👤 Usuário: ${user.username}
@@ -84,23 +105,21 @@ module.exports = {
 🔑 Pix: ${pixKey}
 📌 ID do saque: ${withdrawal.id}
 💼 Saldo restante: R$${updatedUser.balance.toFixed(2)}`
-    );
+    });
 
-    await sendWithdrawLog(
-      interaction.client,
-`💸 ${user.username} solicitou um saque de R$${amount.toFixed(2)}.
-
-⏳ Status: em análise`
-    );
+    await sendWithdrawLog(interaction.client, {
+      embeds: [
+        withdrawalEmbed(user.username, amount)
+      ]
+    });
 
     return interaction.reply({
-      content:
-`✅ Saque solicitado com sucesso!
-
-💰 Valor: R$${amount.toFixed(2)}
-📌 ID: ${withdrawal.id}
-
-Aguarde a aprovação da equipe.`,
+      embeds: [
+        successEmbed(
+          "✅ Saque solicitado com sucesso",
+          `💰 **Valor:** R$${amount.toFixed(2)}\n📌 **ID:** ${withdrawal.id}\n\nAguarde a aprovação da equipe.`
+        )
+      ],
       ephemeral: true
     });
   }

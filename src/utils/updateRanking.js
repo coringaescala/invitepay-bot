@@ -1,9 +1,8 @@
 const prisma = require("../prisma");
+const { rankingEmbed } = require("./embeds");
 
 async function updateRanking(client) {
-
   try {
-
     const channel = await client.channels.fetch(
       process.env.RANKING_CHANNEL_ID
     ).catch(() => null);
@@ -17,27 +16,6 @@ async function updateRanking(client) {
       take: 10
     });
 
-    const ranking = users.map((u, i) => {
-
-      const medals = [
-        "🥇",
-        "🥈",
-        "🥉"
-      ];
-
-      const medal = medals[i] || `#${i + 1}`;
-
-      return `${medal} ${u.username} — R$${u.balance.toFixed(2)}`;
-
-    }).join("\n");
-
-    const content =
-`🏆 TOP AFILIADOS
-
-${ranking}
-
-🔥 Convide amigos e suba no ranking!`;
-
     const messages = await channel.messages.fetch({
       limit: 10
     });
@@ -46,22 +24,18 @@ ${ranking}
       m => m.author.id === client.user.id
     );
 
+    const payload = {
+      embeds: [rankingEmbed(users)]
+    };
+
     if (botMessage) {
-
-      await botMessage.edit(content);
-
+      await botMessage.edit(payload);
     } else {
-
-      await channel.send(content);
-
+      await channel.send(payload);
     }
-
   } catch (error) {
-
     console.error(error);
-
   }
-
 }
 
 module.exports = {

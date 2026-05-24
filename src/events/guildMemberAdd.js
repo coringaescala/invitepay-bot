@@ -10,23 +10,21 @@ const {
   updateRanking
 } = require("../utils/updateRanking");
 
-module.exports = {
+const {
+  referralEmbed
+} = require("../utils/embeds");
 
+module.exports = {
   name: "guildMemberAdd",
 
   async execute(member, client) {
-
     console.log("Novo membro entrou:", member.user.tag);
 
     if (member.user.bot) {
-
-      await sendAdminLog(
-        client,
-        `⚠️ Bot ignorado: ${member.user.tag}`
-      );
-
+      await sendAdminLog(client, {
+        content: `⚠️ Bot ignorado: ${member.user.tag}`
+      });
       return;
-
     }
 
     const ageInDays =
@@ -34,22 +32,16 @@ module.exports = {
       (1000 * 60 * 60 * 24);
 
     if (ageInDays < 30) {
-
-      await sendAdminLog(
-        client,
-        `❌ Referral recusado: ${member.user.tag} possui menos de 30 dias.`
-      );
-
+      await sendAdminLog(client, {
+        content: `❌ Referral recusado: ${member.user.tag} possui menos de 30 dias.`
+      });
       return;
-
     }
 
     const invites = await member.guild.invites.fetch();
 
     const usedInvite = invites.find(invite => {
-      return invite.uses > (
-        invitesCache.get(invite.code) || 0
-      );
+      return invite.uses > (invitesCache.get(invite.code) || 0);
     });
 
     invites.forEach(invite => {
@@ -57,14 +49,10 @@ module.exports = {
     });
 
     if (!usedInvite) {
-
-      await sendAdminLog(
-        client,
-        `❌ Convite não detectado para ${member.user.tag}`
-      );
-
+      await sendAdminLog(client, {
+        content: `❌ Convite não detectado para ${member.user.tag}`
+      });
       return;
-
     }
 
     const inviter = await prisma.user.findUnique({
@@ -74,14 +62,10 @@ module.exports = {
     });
 
     if (!inviter) {
-
-      await sendAdminLog(
-        client,
-        `❌ Invite ${usedInvite.code} não encontrado no banco`
-      );
-
+      await sendAdminLog(client, {
+        content: `❌ Invite ${usedInvite.code} não encontrado no banco`
+      });
       return;
-
     }
 
     const alreadyExists = await prisma.referral.findUnique({
@@ -91,19 +75,13 @@ module.exports = {
     });
 
     if (alreadyExists) {
-
-      await sendAdminLog(
-        client,
-        `❌ Referral duplicado recusado: ${member.user.tag}`
-      );
-
+      await sendAdminLog(client, {
+        content: `❌ Referral duplicado recusado: ${member.user.tag}`
+      });
       return;
-
     }
 
-    const reward = Number(
-      process.env.REFERRAL_REWARD || 1
-    );
+    const reward = Number(process.env.REFERRAL_REWARD || 1);
 
     await prisma.referral.create({
       data: {
@@ -129,27 +107,29 @@ module.exports = {
       }
     });
 
-    await sendPublicLog(
-      client,
-`🎉 ${inviter.username} trouxe ${member.user.username} e ganhou R$${reward}!
+    await sendPublicLog(client, {
+      embeds: [
+        referralEmbed(
+          inviter.username,
+          member.user.username,
+          reward,
+          updatedUser.balance,
+          updatedUser.totalReferrals
+        )
+      ]
+    });
 
-💰 Saldo atual: R$${updatedUser.balance.toFixed(2)}
-👥 Referências totais: ${updatedUser.totalReferrals}`
-    );
-
-    await sendAdminLog(
-      client,
+    await sendAdminLog(client, {
+      content:
 `✅ Referral aprovado
 
 👤 Afiliado: ${inviter.username}
 👥 Novo membro: ${member.user.tag}
-💰 Recompensa: R$${reward}`
-    );
+💰 Recompensa: R$${reward.toFixed(2)}`
+    });
 
     await updateRanking(client);
 
     console.log(`${inviter.username} ganhou R$${reward}`);
-
   }
-
 };
