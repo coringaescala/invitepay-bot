@@ -1,16 +1,17 @@
-const {
-  SlashCommandBuilder
-} = require("discord.js");
-
+const { SlashCommandBuilder } = require("discord.js");
 const prisma = require("../prisma");
+
+const {
+  infoEmbed,
+  errorEmbed
+} = require("../utils/embeds");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("saldo")
-    .setDescription("Ver saldo"),
+    .setDescription("Ver seu saldo"),
 
   async execute(interaction) {
-
     const user = await prisma.user.findUnique({
       where: {
         discordId: interaction.user.id
@@ -19,16 +20,23 @@ module.exports = {
 
     if (!user) {
       return interaction.reply({
-        content: "Você ainda não possui referrals.",
+        embeds: [
+          errorEmbed(
+            "Conta não encontrada",
+            "Você ainda não possui referências. Use `/ref` para gerar seu link."
+          )
+        ],
         ephemeral: true
       });
     }
 
-    await interaction.reply({
-      content:
-`💰 Saldo: R$${user.balance}
-
-👥 Referências: ${user.totalReferrals}`,
+    return interaction.reply({
+      embeds: [
+        infoEmbed(
+          "💰 Seu saldo",
+          `**Saldo disponível:** R$${user.balance.toFixed(2)}\n**Referências:** ${user.totalReferrals}`
+        )
+      ],
       ephemeral: true
     });
   }

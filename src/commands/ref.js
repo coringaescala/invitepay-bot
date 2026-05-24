@@ -1,10 +1,16 @@
-const { SlashCommandBuilder, MessageFlags } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  MessageFlags,
+  PermissionsBitField
+} = require("discord.js");
+
 const prisma = require("../prisma");
+const { successEmbed, errorEmbed } = require("../utils/embeds");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ref")
-    .setDescription("Seu link de referência"),
+    .setDescription("Gerar seu link de referência"),
 
   async execute(interaction) {
     await interaction.deferReply({
@@ -19,18 +25,30 @@ module.exports = {
 
     if (user && user.inviteCode) {
       return interaction.editReply({
-        content: `Seu invite:\nhttps://discord.gg/${user.inviteCode}`
+        embeds: [
+          successEmbed(
+            "🔗 Seu link de referência",
+            `Divulgue este link e ganhe por cada membro válido:\n\nhttps://discord.gg/${user.inviteCode}`
+          )
+        ]
       });
     }
 
     const channel = interaction.guild.channels.cache.find(c =>
       c.isTextBased() &&
-      c.permissionsFor(interaction.guild.members.me).has("CreateInstantInvite")
+      c.permissionsFor(interaction.guild.members.me)?.has(
+        PermissionsBitField.Flags.CreateInstantInvite
+      )
     );
 
     if (!channel) {
       return interaction.editReply({
-        content: "Não encontrei um canal onde eu possa criar convite. Verifique minhas permissões."
+        embeds: [
+          errorEmbed(
+            "Erro ao criar convite",
+            "Não encontrei um canal onde eu tenha permissão para criar convites."
+          )
+        ]
       });
     }
 
@@ -60,7 +78,12 @@ module.exports = {
     }
 
     return interaction.editReply({
-      content: `Seu invite:\nhttps://discord.gg/${invite.code}`
+      embeds: [
+        successEmbed(
+          "🔗 Link criado com sucesso",
+          `Seu link de referência:\n\nhttps://discord.gg/${invite.code}\n\nCada membro válido gera recompensa automaticamente.`
+        )
+      ]
     });
   }
 };
