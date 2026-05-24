@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  discordId      String   @unique
+  username       String
+  inviteCode     String?  @unique
+  balance        Float    @default(0)
+  totalReferrals Int      @default(0)
+
+  referrals      Referral[]
+
+  createdAt      DateTime @default(now())
+}
+
+model Referral {
+  id                 String   @id @default(uuid())
+  referrerId         String
+  referredDiscordId  String   @unique
+  rewarded           Boolean  @default(true)
+  joinedAt           DateTime @default(now())
+
+  referrer           User @relation(fields: [referrerId], references: [id])
+}
