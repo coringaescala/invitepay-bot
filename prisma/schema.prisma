@@ -16,6 +16,7 @@ model User {
   totalReferrals Int      @default(0)
 
   referrals      Referral[]
+  withdrawals    Withdrawal[]
 
   createdAt      DateTime @default(now())
 }
@@ -23,9 +24,35 @@ model User {
 model Referral {
   id                 String   @id @default(uuid())
   referrerId         String
+
   referredDiscordId  String   @unique
+  referredUsername   String?
+
+  inviteCode         String?
+
   rewarded           Boolean  @default(true)
+
+  rewardAmount       Float    @default(1)
+
   joinedAt           DateTime @default(now())
 
   referrer           User @relation(fields: [referrerId], references: [id])
+}
+
+model Withdrawal {
+  id        String   @id @default(uuid())
+
+  userId    String
+
+  amount    Float
+
+  pixKey    String
+
+  status    String   @default("PENDING")
+
+  createdAt DateTime @default(now())
+
+  paidAt    DateTime?
+
+  user      User @relation(fields: [userId], references: [id])
 }
