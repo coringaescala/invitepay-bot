@@ -27,9 +27,9 @@ module.exports = {
     const amount = interaction.options.getNumber("valor");
     const pixKey = interaction.options.getString("pix");
 
-    if (amount <= 0) {
+    if (amount < 10) {
       return interaction.reply({
-        content: "O valor do saque precisa ser maior que zero.",
+        content: "O valor mínimo para saque é R$10.",
         ephemeral: true
       });
     }
