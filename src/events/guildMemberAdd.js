@@ -31,7 +31,7 @@ module.exports = {
       (Date.now() - member.user.createdAt.getTime()) /
       (1000 * 60 * 60 * 24);
 
-    if (ageInDays < 30) {
+    if (ageInDays < 0) {
       await sendAdminLog(client, {
         content: `❌ Referral recusado: ${member.user.tag} possui menos de 30 dias.`
       });
