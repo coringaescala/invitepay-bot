@@ -15,8 +15,8 @@ module.exports = {
 
     console.log("Idade da conta:", ageInDays);
 
-    if (ageInDays < 7) {
-      console.log("Conta muito nova.");
+    if (ageInDays < 30) {
+      console.log("Conta com menos de 30 dias.");
       return;
     }
 
